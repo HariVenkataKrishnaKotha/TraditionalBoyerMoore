@@ -8,45 +8,34 @@
 #include <iostream>
 #include<chrono>
 using namespace std;
-#define MAX_CHAR_LEN 256
-const unsigned long  MAX_BUF_LEN = 1 << 30;
+#define Maximum_Character_Length 256
+const unsigned long  Maximum_Buffer_Length = 1 << 30;
 #define MAX(x, y) (x) > (y) ? (x) : (y)
 
-int debugPrint(int* info, int len)
+int CalculateBadCharacter(string Pattern, int bad_character[])
 {
     int i = 0;
-    for (i = 0; i < len; i++)
-    {
-        printf("%d  ", info[i]);
-    }
-    printf("\n");
-    return 0;
-}
+    int len = Pattern.size();
 
-int calcBC(string subdir, int bc[])
-{
-    int i = 0;
-    int len = subdir.size();
-
-    for (i = 0; i < MAX_CHAR_LEN; i++)
+    for (i = 0; i < Maximum_Character_Length; i++)
     {
-        bc[i] = len;
+        bad_character[i] = len;
     }
     for (i = 0; i < len - 1; i++)
     {
-        bc[subdir[i]] = len - 1 - i;
+        bad_character[Pattern[i]] = len - 1 - i;
     }
 
     return 0;
 }
 
-int calcSuffix(string subdir, int suffix[])
+int CalculateSuffix(string Pattern, int suffix[])
 {
     int i = 0;
     int j = 0;
     int k = 0;
     int count = 0;
-    int len = subdir.size();
+    int len = Pattern.size();
 
     suffix[len - 1] = len;
     for (i = len - 2; i >= 0; i--)
@@ -54,7 +43,7 @@ int calcSuffix(string subdir, int suffix[])
         j = i;
         k = len - 1;
         count = 0;
-        while ((subdir[j--] == subdir[k--])&&(j>-1&&k>-1))
+        while ((Pattern[j--] == Pattern[k--])&&(j>-1&&k>-1))
         {
             count++;
         }
@@ -64,11 +53,11 @@ int calcSuffix(string subdir, int suffix[])
     return 0;
 }
 
-int calcGS(string subdir, int gs[])
+int CalculateGoodSuffix(string Pattern, int good_suffix[])
 {
     int i = 0;
     int j = 0;
-    int len = subdir.size();
+    int len = Pattern.size();
 
     int* suffix = (int*)malloc(sizeof(int) * len);
     if (!suffix)
@@ -77,12 +66,12 @@ int calcGS(string subdir, int gs[])
         return 0;
     }
 
-    calcSuffix(subdir, suffix);
+    CalculateSuffix(Pattern, suffix);
 
     //debugPrint(suffix,len);
     for (i = 0; i < len; i++)
     {
-        gs[i] = len;
+        good_suffix[i] = len;
     }
 
     j = 0;
@@ -92,9 +81,9 @@ int calcGS(string subdir, int gs[])
         {
             for (; j < len - 1; j++)
             {
-                if (gs[j] == len)
+                if (good_suffix[j] == len)
                 {
-                    gs[j] = len - 1 - i;
+                    good_suffix[j] = len - 1 - i;
                 }
             }
         }
@@ -102,7 +91,7 @@ int calcGS(string subdir, int gs[])
 
     for (i = 0; i <= len - 2; i++)
     {
-        gs[len - 1 - suffix[i]] = len - 1 - i;
+        good_suffix[len - 1 - suffix[i]] = len - 1 - i;
     }
 
     if (suffix)
@@ -114,52 +103,52 @@ int calcGS(string subdir, int gs[])
     return 0;
 }
 
-int BoyerMoore(string szText, int nTextLen, string szSubstr, int nStrLen)
+int BoyerMoore(string Text, int TxtLen, string Pattern, int PatLen)
 {
     //int textlen = strlen(text);
-    //int sublen = strlen(subdir);
+    //int sublen = strlen(Pattern);
     int i = 0;
     int j = 0;
 
-    int* bc = (int*)malloc(sizeof(int) * MAX_CHAR_LEN);
-    int* gs = (int*)malloc(sizeof(int) * nStrLen);
+    int* bad_character = (int*)malloc(sizeof(int) * Maximum_Character_Length);
+    int* good_suffix = (int*)malloc(sizeof(int) * PatLen);
 
-    calcBC(szSubstr, bc);
-    calcGS(szSubstr, gs);
+    CalculateBadCharacter(Pattern, bad_character);
+    CalculateGoodSuffix(Pattern, good_suffix);
 
-    //printf("%s\n",szText);
-    //printf("%s\n",szSubstr);
+    //printf("%s\n",Text);
+    //printf("%s\n",Pattern);
 
-    //debugPrint(gs, nStrLen);
+    //debugPrint(good_suffix, PatLen);
     //searching
-    while (j <= nTextLen - nStrLen)
+    while (j <= TxtLen - PatLen)
     {
-        for (i = nStrLen - 1; i >= 0 && szSubstr[i] == szText[j + i]; i--);
+        for (i = PatLen - 1; i >= 0 && Pattern[i] == Text[j + i]; i--);
 
         //find
         if (i < 0)
         {
             printf("The Pattern was found at the position:%d\n", j);
-            //j += gs[0];
+            //j += good_suffix[0];
             //break;
             return 0;
         }
         else
         {
-            //j += bc[szText[j + i]] - nStrLen + 1 + i;
-            j += MAX(bc[szText[j + i]] - nStrLen + 1 + i, gs[i]);
+            //j += bad_character[Text[j + i]] - PatLen + 1 + i;
+            j += MAX(bad_character[Text[j + i]] - PatLen + 1 + i, good_suffix[i]);
         }
     }
 
-    printf("not foud str:%s\n", szSubstr);
+    printf("Pattern not found:%s\n", Pattern);
     return 0;
 }
 
-string readFileIntoString2(const string& path) {
+string FiletoString(const string& path) {
     auto ss = ostringstream{};
     ifstream input_file(path);
     if (!input_file.is_open()) {
-        cerr << "Could not open the file - '"
+        cerr << "Please check the file - '"
             << path << "'" << endl;
         exit(EXIT_FAILURE);
     }
@@ -170,20 +159,20 @@ string readFileIntoString2(const string& path) {
 int main(void)
 {
 
-    //string g_szText = "acagtatggcaacccttcctcctattaggagaccgcgcttagtataacttgcactgtttg ccccgtgtcaatgtaaattcgagtaacctcttagagccgacaccttgcgacatactcagg gaatcatcctacttgccagcgttcgataccctgccgattatactgggacccaccgcgttc ctgggctcgccttatctcccgtgatgggctttccgactatgggagcggaactctataaat ggcggcactcagagtgagccattcaattcgtggtctgggagtcagtgaacacttgctgtc gcatagcgttagagaactcacgatatttggtcggccagttgcggttgttgatctgggtca gcgaggagcaggtctgcgccattgttgcgggtcctccttccataacgcttgctcgatccc agagagctaaacgcaaagcccgagctcttgaaggcgtattactgtccgaggcagtggcgc tcacctgcctgttccgtgtcgcagatttcattatgtctagtaaaaaaggattagttgagc tgagccgcctttgaagagaacgattctgcgctctattacgtcgttccagagaaattaccg cgggatctctaggggaacgagacgatcaccattccgcctttaggcatatatattatacgt cctccgccaattgtgaggtgcaaaatagttgcaatcaccgccaagtactttcgctaagcc ttgcgcctatacagctctcgccgtacggtgccctcgatatgcaagtcgaaccctcccact ttagtgatgatcattgctatgtattggtaccaggcggcgacgagcgagagacaatgcttt acttgaggcacgccatcttgtaagggactgtcgccctttgtagcaatagggaaagttcct aagtagttcgtgactttggcttgcaacggcgtacgatgatagccgatcgtgtaagcgaca gatagcatgaaagtacgccgtatactagaagtacacccaataacgaactacgtcagaaac aggcggggattgcatgtaatgtcctgagctacaatgctggctgcaagccacatgtcccac ttattcttgaaatcaggtgtcagttatatgcatctggggtgccataactgtatcgggcct gcgtgattcttcgtattctgcgcacagcaacatcacctcttcggcgattttaatgttcga ttggttaatccgtaattcgatagggtcgctgctggaatgggcaatcgtcttgcttacaat cccgtgggtaaagccgtgcggcgagcgagttgcgaagttcaacttcccgacaaccgaaac ccccgacaaggtagcgtatttgctcattatggcaaccaatttgacttagtatggttgggt gactccaatttttccggcccagcaatcggccaaccttcttcaaccatcgacccgaagcga cccccggaccagacccgtgtcgtgcatgatcccgaacatcgtagaatccctggcgtaagc tgttcgtgtattatcggaaagaaacaaacactcgcgtgcgtggaatagcgaagcgaccga tcatgaccctgctgtcggctgtagagtcctctagtatagacaatgtacacctgtatcagg cagagacttattcggccctgatcacaagaaaaaaaacgttcacgggccggggggatcagc caatcatgcctgtgaatcgactctcgatcgtctaccgtaaggacaaccgcactcacgctg ctagttcgtttgaacagttaacgtcctacccagcgaagactgggtctaggaagtactcgt aaattgtagtagttgcgattggagggatagcgaaagtgggcgggtttaagttggcagctg tatgcttcaagtacctctcggtactacagtctggagtgtgggcaacacgagcttctgtac caggtaagcaaatgtacgtggtctagggaaatctaacaaggaaggccacgcgatcaataa aagcagcaggacctatagaccagttctttagccgatattggatgccaggactctctggac ggcgagatcctcccggtggctacacaagtaatcgtaagaaatcaaatcgccgtacgtacc acaacgcataccgcatgataaaaaaaacgagacgtaaattgtattcaacgcctcatgctc cgttagagtagggcacggagaacagaggccgcccgccaccgcagatcctaagttggaccg atagcgaatcatagaacttttggctgggactccgtaatggttagcacccatgcgctctgc gcgacctgcattcccctttatgccagctaaccagacggccccatagtgtccctcggtagt ttggtgaagccgtatctttggagaaacctaaaccctgttgtgcctccgctatttttccgc cggtatacgcaataggatgtccaacgaattcttaaactaaggggcttcggatcaggcggg gccggctgcggcggatgtaggtgcctagtgaacccaccgtagcccgtacaattcgattag cctgagtcggaagccggcgtagaaaaaactacgcgatgtaccatcgcctggggttcagag aatttttctcgtcgatcttttatgccgcgtccccacacggggccttagttatccgtccca gcgtctgggcaaagaggcgagacatttagcacgagccgcaatccctctagccttcggatt aatgacgctgttaggtcagcgacactaaaaccgaaggaatggcctgggtcaagacatact aaagtgtcagtaactcgcaaatgagggttgtcccccgctcacttatagttgaaaggctcg ccgactaggccgatgttttcatgtataagaagcagcgagaatcttcaatgcgtatcaacc gagaaactttagcaattcgccttaggggtggcgctgcggaccgatgtaagacaactatag gcacgagcat";
-    //string szStr = "accg atagcgaatcatag";
+    //string Text = "acagtatggcaacccttcctcctattaggagaccgcgcttagtataacttgcactgtttg ccccgtgtcaatgtaaattcgagtaacctcttagagccgacaccttgcgacatactcagg gaatcatcctacttgccagcgttcgataccctgccgattatactgggacccaccgcgttc ctgggctcgccttatctcccgtgatgggctttccgactatgggagcggaactctataaat ggcggcactcagagtgagccattcaattcgtggtctgggagtcagtgaacacttgctgtc gcatagcgttagagaactcacgatatttggtcggccagttgcggttgttgatctgggtca gcgaggagcaggtctgcgccattgttgcgggtcctccttccataacgcttgctcgatccc agagagctaaacgcaaagcccgagctcttgaaggcgtattactgtccgaggcagtggcgc tcacctgcctgttccgtgtcgcagatttcattatgtctagtaaaaaaggattagttgagc tgagccgcctttgaagagaacgattctgcgctctattacgtcgttccagagaaattaccg cgggatctctaggggaacgagacgatcaccattccgcctttaggcatatatattatacgt cctccgccaattgtgaggtgcaaaatagttgcaatcaccgccaagtactttcgctaagcc ttgcgcctatacagctctcgccgtacggtgccctcgatatgcaagtcgaaccctcccact ttagtgatgatcattgctatgtattggtaccaggcggcgacgagcgagagacaatgcttt acttgaggcacgccatcttgtaagggactgtcgccctttgtagcaatagggaaagttcct aagtagttcgtgactttggcttgcaacggcgtacgatgatagccgatcgtgtaagcgaca gatagcatgaaagtacgccgtatactagaagtacacccaataacgaactacgtcagaaac aggcggggattgcatgtaatgtcctgagctacaatgctggctgcaagccacatgtcccac ttattcttgaaatcaggtgtcagttatatgcatctggggtgccataactgtatcgggcct gcgtgattcttcgtattctgcgcacagcaacatcacctcttcggcgattttaatgttcga ttggttaatccgtaattcgatagggtcgctgctggaatgggcaatcgtcttgcttacaat cccgtgggtaaagccgtgcggcgagcgagttgcgaagttcaacttcccgacaaccgaaac ccccgacaaggtagcgtatttgctcattatggcaaccaatttgacttagtatggttgggt gactccaatttttccggcccagcaatcggccaaccttcttcaaccatcgacccgaagcga cccccggaccagacccgtgtcgtgcatgatcccgaacatcgtagaatccctggcgtaagc tgttcgtgtattatcggaaagaaacaaacactcgcgtgcgtggaatagcgaagcgaccga tcatgaccctgctgtcggctgtagagtcctctagtatagacaatgtacacctgtatcagg cagagacttattcggccctgatcacaagaaaaaaaacgttcacgggccggggggatcagc caatcatgcctgtgaatcgactctcgatcgtctaccgtaaggacaaccgcactcacgctg ctagttcgtttgaacagttaacgtcctacccagcgaagactgggtctaggaagtactcgt aaattgtagtagttgcgattggagggatagcgaaagtgggcgggtttaagttggcagctg tatgcttcaagtacctctcggtactacagtctggagtgtgggcaacacgagcttctgtac caggtaagcaaatgtacgtggtctagggaaatctaacaaggaaggccacgcgatcaataa aagcagcaggacctatagaccagttctttagccgatattggatgccaggactctctggac ggcgagatcctcccggtggctacacaagtaatcgtaagaaatcaaatcgccgtacgtacc acaacgcataccgcatgataaaaaaaacgagacgtaaattgtattcaacgcctcatgctc cgttagagtagggcacggagaacagaggccgcccgccaccgcagatcctaagttggaccg atagcgaatcatagaacttttggctgggactccgtaatggttagcacccatgcgctctgc gcgacctgcattcccctttatgccagctaaccagacggccccatagtgtccctcggtagt ttggtgaagccgtatctttggagaaacctaaaccctgttgtgcctccgctatttttccgc cggtatacgcaataggatgtccaacgaattcttaaactaaggggcttcggatcaggcggg gccggctgcggcggatgtaggtgcctagtgaacccaccgtagcccgtacaattcgattag cctgagtcggaagccggcgtagaaaaaactacgcgatgtaccatcgcctggggttcagag aatttttctcgtcgatcttttatgccgcgtccccacacggggccttagttatccgtccca gcgtctgggcaaagaggcgagacatttagcacgagccgcaatccctctagccttcggatt aatgacgctgttaggtcagcgacactaaaaccgaaggaatggcctgggtcaagacatact aaagtgtcagtaactcgcaaatgagggttgtcccccgctcacttatagttgaaaggctcg ccgactaggccgatgttttcatgtataagaagcagcgagaatcttcaatgcgtatcaacc gagaaactttagcaattcgccttaggggtggcgctgcggaccgatgtaagacaactatag gcacgagcat";
+    //string Pattern = "accg atagcgaatcatag";
     string filename("Sample.txt");
     //string file_contents;
 
-    string g_szText = readFileIntoString2(filename);
-    string szStr;// = "agt tactcgtgcgtattacct";
-    START:std::getline(std::cin, szStr);
+    string Text = FiletoString(filename);
+    string Pattern;// = "agt tactcgtgcgtattacct";
+    START:std::getline(std::cin, Pattern);
     //begin time
     auto start = std::chrono::steady_clock::now();
     //search
-    BoyerMoore(g_szText, MAX_BUF_LEN, szStr, szStr.size());
+    BoyerMoore(Text, Maximum_Buffer_Length, Pattern, Pattern.size());
     //end time
-    cout << "\nPattern : " << szStr;
+    cout << "\nPattern : " << Pattern;
     auto end = std::chrono::steady_clock::now();
     cout << "\n\nElapsed time in micro seconds: "
         << chrono::duration_cast<chrono::microseconds>(end - start).count()
